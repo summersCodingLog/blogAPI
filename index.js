@@ -42,37 +42,49 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //CHALLENGE 1: GET All posts
 app.get("/posts", (req, res) => {
+  console.log(posts);
   res.json(posts);
 })
 //CHALLENGE 2: GET a specific post by id
 app.get("/posts/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  if (id > -1) {
-    const targetPostID = posts.findIndex((post) => id === post.id);
-    res.json(posts[targetPostID])
-      .sendStatus(200);
-  } else {
-    res.json({ error: `Invalid id.` })
-      .sendStatus(404);
+  const post = posts.find((post) => parseInt(req.params.id) === post.id)
+  if (!post) {
+    res.sendStatus(404).json({ message: "Post not found" });
   }
+  res.json(post);
 })
 //CHALLENGE 3: POST a new post
-app.post("/", (req, res) => {
+app.post("/posts", (req, res) => {
+  const newId = lastId += 1;
   const newPost = {
-    id: posts.length + 1,
+    id: newId,
     title: req.body.title,
     content: req.body.content,
     author: req.body.content,
     date: new Date()
-  }
+  };
+  lastId = newId;
   posts.push(newPost);
-  res.json(newPost);
+  res.status(201).json(newPost);
 })
 //CHALLENGE 4: PATCH a post when you just want to update one parameter
-app.patch("", (req, res) => {
+app.patch("/posts/:id", (req, res) => {
+  const existPost = posts.find((post) => post.id === parseInt(req.params.id));
+  if (!existPost) return res.status(404).json({ message: "Post not found" });
 
+  if (req.body.title) existPost.title = req.body.title;
+  if (req.body.content) existPost.content = req.body.content;
+  if (req.body.author) existPost.author = req.body.author;
+  res.json(existPost);
 })
 //CHALLENGE 5: DELETE a specific post by providing the post id.
+app.delete("/posts/:id", (req, res) => {
+  const foundIndex = posts.findIndex((post) => post.id === parseInt(req.params.id));
+  if (foundIndex === -1) return req.status(404).json({ message: "Post not found." });
+
+  posts.splice(foundIndex, 1);
+  res.json({ message: "Post deleted." });
+})
 
 app.listen(port, () => {
   console.log(`API is running at http://localhost:${port}`);
